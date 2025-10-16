@@ -1,0 +1,17 @@
+[package]
+name = "abms-automatic-tool"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+reqwest = "0.12"
+color-eyre = "0.6"
+tokio = { version = "1", features = ["full"] }
+
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+opt-level = "z"  # Optimize for size.
+lto = true
+codegen-units = 1
+panic = "abort"
