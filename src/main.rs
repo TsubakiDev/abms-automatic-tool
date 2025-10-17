@@ -12,23 +12,20 @@ struct Args {
 
     /// Your account's ID (Type: String)
     #[arg(short, long)]
-    user_id: String,
+    id: String,
 
     // Your account's password (Type: String)
     #[arg(short, long)]
-    user_password: String,
-
+    password: String,
 }
 
 #[tokio::main()]
 async fn main() -> color_eyre::Result<()> {
     let args = Args::parse();
 
-    let client = reqwest::Client::new();
+    println!("Authcation URL: {}", &args.authcation_url.to_string());
 
-    let resp_text = client.get("https://baidu.com").send().await;
-
-    println!("{:?}", resp_text);
+    let _ = auth::do_authcation(args.authcation_url.as_str(), args.id.as_str(), args.password.as_str()).await?;
 
     Ok(())
 }
