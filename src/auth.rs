@@ -15,7 +15,7 @@ struct ResponseData {
     logouturl: Option<String>,
     selfTicket: Option<String>,
     macChange: bool,
-    groupId: Option<String>,
+    groupId: Option<i64>,
     passwdPolicyCheck: bool,
     dropLogCheck: Option<String>,
     logoutSsoUrl: Option<String>,
@@ -31,21 +31,38 @@ pub(crate) async fn do_authcation(
         ("userid", user_id.to_string()),
         ("passwd", passwd.to_string()),
         ("wlanuserip", "10.99.26.50".to_string()),
-        ("wlanacname", "NFT-BASE-1".to_string()),
+        ("wlanacname", "NFV-BASE-1".to_string()),
     ];
 
     let full_url = format!("http://{}/quickauth.do", url);
-
     let resp = client.get(&full_url).query(&params).send().await?;
 
-    if resp.status().is_success() {
-        let r_data: ResponseData = resp.json().await?;
-        println!("Response JSON: {:#?}", r_data);
+    let status = resp.status();
+    let body = resp.text().await?;
 
-        Ok(r_data.code == "0")
+    if status.is_success() {
+        match serde_json::from_str::<ResponseData>(&body) {
+            Ok(r_data) => {
+                if r_data.code == "0" {
+                    println!("Authentication Successful.");
+                    Ok(true)
+                } else {
+                    eprintln!(
+                        "Authentication failed: code = {}, message = {:?}, rec = {:?}",
+                        r_data.code, r_data.message, r_data.rec
+                    );
+                    Ok(false)
+                }
+            }
+            Err(err) => {
+                eprintln!("Failed to parse response JSON: {}", err);
+                eprintln!("Raw response body: {}", body);
+                Ok(false)
+            }
+        }
     } else {
-        eprintln!("HTTP request failed: {}", resp.status());
+        eprintln!("HTTP request failed: {}", status);
+        eprintln!("Response body: {}", body);
         Ok(false)
     }
 }
-
