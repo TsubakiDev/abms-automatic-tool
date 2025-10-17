@@ -1,3 +1,5 @@
+use std::process::Command;
+
 use color_eyre::Result;
 use reqwest::Client;
 use serde::Deserialize;
@@ -25,12 +27,21 @@ pub(crate) async fn do_authcation(
     url: &str,
     user_id: &str,
     passwd: &str,
+    wan_interface: &str,
 ) -> Result<bool> {
     let client = Client::new();
+
+    let cmd = format!(
+        "ifconfig {} | grep 'inet addr:' | grep -oE '([0-9]{{1,3}}\\.){{3}}[0-9]{{1,3}}' | head -n 1",
+        wan_interface
+    );
+    let output = Command::new("sh").arg("-c").arg(cmd).output()?;
+    let wlan_ip = String::from_utf8(output.stdout)?.trim().to_string();
+
     let params = [
         ("userid", user_id.to_string()),
         ("passwd", passwd.to_string()),
-        ("wlanuserip", "10.99.26.50".to_string()),
+        ("wlanuserip", wlan_ip),
         ("wlanacname", "NFV-BASE-1".to_string()),
     ];
 
